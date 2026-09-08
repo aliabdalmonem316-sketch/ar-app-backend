@@ -82,7 +82,13 @@ app.post('/api/compile', upload.single('mind'), (req, res) => {
     const oldPath = req.file.path;
     const newPath = path.join(__dirname, 'uploads', 'targets.mind');
     if (fs.existsSync(newPath)) fs.unlinkSync(newPath);
-    fs.renameSync(oldPath, newPath);
+    try {
+        fs.copyFileSync(oldPath, newPath);
+        fs.unlinkSync(oldPath);
+    } catch (e) {
+        console.error("Error moving file:", e);
+        return res.status(500).json({ error: 'Failed to save mind file', details: e.message });
+    }
     console.log("✅ تم استقبال وحفظ ملف targets.mind بنجاح!");
     res.json({ success: true, mindUrl: '/uploads/targets.mind' });
 });
