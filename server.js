@@ -27,6 +27,7 @@ const storage = multer.diskStorage({
     if (file.fieldname === 'image') cb(null, 'uploads/images');
     else if (file.fieldname === 'model') cb(null, 'uploads/models');
     else if (file.fieldname === 'mind') cb(null, 'uploads');
+    else cb(null, 'uploads'); // Fallback for any unexpected field name from Vercel
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + '_' + file.originalname.replace(/\s+/g,'_'));
@@ -76,10 +77,10 @@ app.delete('/api/targets/:id', (req, res) => {
     }
 });
 
-// استقبال ملف .mind المدمج من لوحة التحكم (المتصفح هو من يقوم بالدمج)
-app.post('/api/compile', upload.single('mind'), (req, res) => {
-    if (!req.file) return res.status(400).json({ error: 'Mind file required' });
-    const oldPath = req.file.path;
+app.post('/api/compile', upload.any(), (req, res) => {
+    if (!req.files || req.files.length === 0) return res.status(400).json({ error: 'Mind file required' });
+    const file = req.files[0];
+    const oldPath = file.path;
     const newPath = path.join(__dirname, 'uploads', 'targets.mind');
     if (fs.existsSync(newPath)) fs.unlinkSync(newPath);
     try {
